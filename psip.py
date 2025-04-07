@@ -1,5 +1,5 @@
 import logging
-from exceptions import ParseFailed, TypeMismatch
+from exceptions import ParseFailed, TypeMismatch, StackUnderflow
 logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
@@ -68,12 +68,34 @@ def mod_operation():
     else:
         raise TypeMismatch("not enough operands for operation mod")
 
-# add operations to the global dictionary/scope
-dict_stack[-1]["add"] = add_operation
-dict_stack[-1]["def"] = def_operation
-dict_stack[-1]["sub"] = sub_operation
-dict_stack[-1]["div"] = div_operation
-dict_stack[-1]["mod"] = mod_operation
+def dup_operation():
+    """duplicates the top stack element"""
+    if len(op_stack) >= 1:
+        op1 = op_stack.pop()
+        op_stack.append(op1)
+        op_stack.append(op1)
+    else:
+        raise StackUnderflow("not enough operands for operation dup")
+
+def exch_operation():
+    """Exchanges top two stack elements"""
+    if len(op_stack) >= 2:
+        op1 = op_stack.pop()
+        op2 = op_stack.pop()
+        op_stack.append(op1)
+        op_stack.append(op2)
+    else:
+        raise StackUnderflow("not enough operands for operation exch")
+
+def pop_operation():
+    """rm top stack element"""
+    if len(op_stack) >= 1:
+        op_stack.pop()
+    else:
+        raise StackUnderflow("not enough operands for operation pop")
+
+def clear_operation():
+    op_stack.clear()
 
 def pop_and_print():
     if(len(op_stack) >= 1):
@@ -82,7 +104,39 @@ def pop_and_print():
     else:
         raise TypeMismatch("Stack is empty! nothin to print")
     
+def count_operation():
+    stack_len = len(op_stack)
+    op_stack.append(stack_len)
+
+def copy_operation():
+    """copies the top n elements"""
+    if len(op_stack) >= 1:
+        n = op_stack[-1]
+        if len(op_stack) - 1 >= n:
+            elements_to_copy = op_stack[:-1][::-1][:n+1][::-1]
+            op_stack.pop()
+            op_stack.extend(elements_to_copy)
+    else:
+        raise StackUnderflow("not enough operands for operation copy")
+
+# add arithmetic operations to the global dictionary/scope
+dict_stack[-1]["add"] = add_operation
+dict_stack[-1]["def"] = def_operation
+dict_stack[-1]["sub"] = sub_operation
+dict_stack[-1]["div"] = div_operation
+dict_stack[-1]["mod"] = mod_operation
+
+# stack manipulation operations
+dict_stack[-1]["dup"] = dup_operation
+dict_stack[-1]["exch"] = exch_operation
+dict_stack[-1]["pop"] = pop_operation
+dict_stack[-1]["clear"] = clear_operation
+dict_stack[-1]["count"] = count_operation
+dict_stack[-1]["copy"] = copy_operation
+
+# input operations
 dict_stack[-1]["="] = pop_and_print
+
 
 def lookup_in_dictionary(input):
     top_dict = dict_stack[-1] # current scope

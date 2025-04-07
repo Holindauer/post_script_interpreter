@@ -12,3 +12,8 @@ class DivByZero(Exception):
     """ Exception when dividing by zero """ 
     def __init__(self, message):
         super().__init__(message)
+
+class StackUnderflow(Exception):
+    """ Exception when not enough elements in the stack """
+    def __init__(self, message):
+        super().__init__(message)
