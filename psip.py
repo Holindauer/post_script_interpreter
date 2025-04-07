@@ -1,21 +1,11 @@
 import logging
-# logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+from exceptions import ParseFailed, TypeMismatch
+logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
 
-
-op_stack = []
-dict_stack = []
+op_stack = []   # type: ignore
+dict_stack = [] # type: ignore
 dict_stack.append({}) # global dict 
-
-class ParseFailed(Exception):
-    """ Exception while parsing """ 
-    def __init__(self, message):
-        super().__init__(message)
-
-class TypeMismatch(Exception):
-    """ Exception with types of operators and operands """ 
-    def __init__(self, message):
-        super().__init__(message)
 
 def repl():
     while True:
@@ -38,9 +28,6 @@ def def_operation():
     else:
         raise TypeMismatch("not enough operands for operation add")
     
-dict_stack[-1]["def"] = def_operation
-
-
 def add_operation():
     if len(op_stack) >= 2:
         op1 = op_stack.pop()
@@ -50,7 +37,43 @@ def add_operation():
     else:
         raise TypeMismatch("not enough operands for operation add")
     
+def sub_operation():
+    if len(op_stack) >= 2:
+        op1 = op_stack.pop()
+        op2 = op_stack.pop()
+        res = op2 - op1  # rev bc postfix, so { 1 2 sub } == -1
+        op_stack.append(res)
+    else:
+        raise TypeMismatch("not enough operands for operation add")
+
+def div_operation():
+    if len(op_stack) >= 2:
+        op1 = op_stack.pop()
+        op2 = op_stack.pop()
+        if op1 == 0:
+            raise DivByZero("dividing by zero is invalid")
+        res = op2 / op1  # rev bc postfix, so { 1 2 div } == 1 / 2
+        op_stack.append(res)
+    else:
+        raise TypeMismatch("not enough operands for operation div")
+
+def mod_operation():
+    if len(op_stack) >= 2:
+        op1 = op_stack.pop()
+        op2 = op_stack.pop()
+        if op1 == 0:
+            raise DivByZero("dividing by zero is invalid")
+        res = op2 % op1  # rev bc postfix, so { 1 2 mod } == 1 % 2 
+        op_stack.append(res)
+    else:
+        raise TypeMismatch("not enough operands for operation mod")
+
+# add operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
+dict_stack[-1]["def"] = def_operation
+dict_stack[-1]["sub"] = sub_operation
+dict_stack[-1]["div"] = div_operation
+dict_stack[-1]["mod"] = mod_operation
 
 def pop_and_print():
     if(len(op_stack) >= 1):
