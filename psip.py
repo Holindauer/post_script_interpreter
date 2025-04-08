@@ -1,5 +1,7 @@
 import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow
+from utils import is_num, is_int
+import math
 logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
@@ -29,7 +31,7 @@ def def_operation():
         raise TypeMismatch("not enough operands for operation add")
     
 def add_operation():
-    if len(op_stack) >= 2:
+    if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
         op1 = op_stack.pop()
         op2 = op_stack.pop()
         res = op1 + op2 
@@ -38,7 +40,7 @@ def add_operation():
         raise TypeMismatch("not enough operands for operation add")
     
 def sub_operation():
-    if len(op_stack) >= 2:
+    if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
         op1 = op_stack.pop()
         op2 = op_stack.pop()
         res = op2 - op1  # rev bc postfix, so { 1 2 sub } == -1
@@ -47,7 +49,7 @@ def sub_operation():
         raise TypeMismatch("not enough operands for operation add")
 
 def div_operation():
-    if len(op_stack) >= 2:
+    if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
         op1 = op_stack.pop()
         op2 = op_stack.pop()
         if op1 == 0:
@@ -57,8 +59,19 @@ def div_operation():
     else:
         raise TypeMismatch("not enough operands for operation div")
 
+def idiv_operation():
+    if len(op_stack) >= 2 and is_int(op_stack[-1]) and is_int(op_stack[-2]):
+        op1 = op_stack.pop()
+        op2 = op_stack.pop()
+        if op1 == 0:
+            raise DivByZero("dividing by zero is invalid")
+        res = op2 // op1  # rev bc postfix, so { 1 2 div } == 1 // 2
+        op_stack.append(res)
+    else:
+        raise TypeMismatch("not enough operands for operation div")
+
 def mod_operation():
-    if len(op_stack) >= 2:
+    if len(op_stack) >= 2 and is_int(op_stack[-1]) and is_int(op_stack[-2]):
         op1 = op_stack.pop()
         op2 = op_stack.pop()
         if op1 == 0:
@@ -67,6 +80,42 @@ def mod_operation():
         op_stack.append(res)
     else:
         raise TypeMismatch("not enough operands for operation mod")
+
+def abs_operation():
+    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+        op_stack[-1] = abs(op_stack[-1])
+    else:
+        raise StackUnderflow("not enough operands for operation abs")
+
+def neg_operation():
+    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+        op_stack[-1] = -op_stack[-1]
+    else:
+        raise StackUnderflow("not enough operands for operation neg")
+
+def ceil_operation():
+    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+        op_stack[-1] = math.ceil(op_stack[-1])
+    else:
+        raise StackUnderflow("not enough operands for operation ceil")
+
+def floor_operation():
+    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+        op_stack[-1] = math.floor(op_stack[-1])
+    else:
+        raise StackUnderflow("not enough operands for operation floor")
+
+def round_operation():
+    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+        op_stack[-1] = round(op_stack[-1])
+    else:
+        raise StackUnderflow("not enough operands for operation round")
+
+def sqrt_operation():
+    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+        op_stack[-1] = math.sqrt(op_stack[-1])
+    else:
+        raise StackUnderflow("not enough operands for operation sqrt")
 
 def dup_operation():
     """duplicates the top stack element"""
@@ -124,7 +173,14 @@ dict_stack[-1]["add"] = add_operation
 dict_stack[-1]["def"] = def_operation
 dict_stack[-1]["sub"] = sub_operation
 dict_stack[-1]["div"] = div_operation
+dict_stack[-1]["idiv"] = idiv_operation
 dict_stack[-1]["mod"] = mod_operation
+dict_stack[-1]["abs"] = abs_operation
+dict_stack[-1]["neg"] = neg_operation
+dict_stack[-1]["ceil"] = ceil_operation
+dict_stack[-1]["floor"] = floor_operation
+dict_stack[-1]["round"] = round_operation
+dict_stack[-1]["sqrt"] = sqrt_operation
 
 # stack manipulation operations
 dict_stack[-1]["dup"] = dup_operation

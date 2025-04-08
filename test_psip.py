@@ -1,7 +1,7 @@
 import psip
 from exceptions import DivByZero, StackUnderflow
 import random
-
+import math
 def two_random_numbers():
 	two_nums = (random.randint(0, 100), random.randint(0, 100))
 	two_nums_str = (str(two_nums[0]), str(two_nums[1]))
@@ -42,6 +42,17 @@ def test_div_operation():
 	except DivByZero:
 		pass 
 
+def test_idiv_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	try:
+		psip.process_input("idiv")
+		assert psip.op_stack[-1] == two_nums[0] // two_nums[1]
+	except DivByZero:
+		pass 
+
 def test_mod_operation():
 	two_nums, two_nums_str = two_random_numbers()
 	psip.op_stack.clear()
@@ -52,6 +63,48 @@ def test_mod_operation():
 		assert psip.op_stack[-1] == two_nums[0] % two_nums[1]
 	except DivByZero:
 		pass 
+
+def test_abs_operation():
+	num = random.randint(-100, -1)
+	psip.op_stack.clear()
+	psip.process_input(str(num))
+	psip.process_input("abs")
+	assert psip.op_stack[-1] == abs(num)
+
+def test_neg_operation():
+	num = random.randint(-100, 100)
+	psip.op_stack.clear()
+	psip.process_input(str(num))
+	psip.process_input("neg")
+	assert psip.op_stack[-1] == -num
+
+def test_sqrt_operation():
+	num = random.randint(0, 100)
+	psip.op_stack.clear()
+	psip.process_input(str(num))
+	psip.process_input("sqrt")
+	assert psip.op_stack[-1] == math.sqrt(num)
+
+def test_ceil_operation():
+	num = random.randint(0, 100)
+	psip.op_stack.clear()
+	psip.process_input(str(num))
+	psip.process_input("ceil")
+	assert psip.op_stack[-1] == math.ceil(num)
+
+def test_floor_operation():
+	num = random.randint(0, 100)
+	psip.op_stack.clear()
+	psip.process_input(str(num))
+	psip.process_input("floor")
+	assert psip.op_stack[-1] == math.floor(num)
+	
+def test_round_operation():
+	num = random.randint(0, 100)
+	psip.op_stack.clear()
+	psip.process_input(str(num))
+	psip.process_input("round")
+	assert psip.op_stack[-1] == round(num)
 
 def test_dup_operation():
 	two_nums, two_nums_str = two_random_numbers()
