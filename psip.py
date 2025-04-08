@@ -1,5 +1,5 @@
 import logging
-from exceptions import ParseFailed, TypeMismatch, StackUnderflow
+from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
 from utils import is_num, is_int
 import math
 from typing import Callable
@@ -30,63 +30,45 @@ def def_operation():
             op_stack.append(value)
     else:
         raise TypeMismatch("not enough operands for operation add")
-    
-def add_operation():
+
+def div(x, y):
+    return x / y
+def idiv(x, y):
+    return x // y
+def mod(x, y):
+    return x % y
+
+def binary_operation(op: Callable):
     if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
         op1 = op_stack.pop()
-        op2 = op_stack.pop()
-        res = op1 + op2 
-        op_stack.append(res)
-    else:
-        raise TypeMismatch("not enough operands for operation add")
-    
-def sub_operation():
-    if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
-        op1 = op_stack.pop()
-        op2 = op_stack.pop()
-        res = op2 - op1  # rev bc postfix, so { 1 2 sub } == -1
-        op_stack.append(res)
-    else:
-        raise TypeMismatch("not enough operands for operation add")
-
-def div_operation():
-    if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
-        op1 = op_stack.pop()
-        op2 = op_stack.pop()
-        if op1 == 0:
+        if op1 == 0 and (op in [div, idiv, mod]):
             raise DivByZero("dividing by zero is invalid")
-        res = op2 / op1  # rev bc postfix, so { 1 2 div } == 1 / 2
-        op_stack.append(res)
-    else:
-        raise TypeMismatch("not enough operands for operation div")
-
-def idiv_operation():
-    if len(op_stack) >= 2 and is_int(op_stack[-1]) and is_int(op_stack[-2]):
-        op1 = op_stack.pop()
         op2 = op_stack.pop()
-        if op1 == 0:
-            raise DivByZero("dividing by zero is invalid")
-        res = op2 // op1  # rev bc postfix, so { 1 2 div } == 1 // 2
+        res = op(op2, op1)
         op_stack.append(res)
     else:
-        raise TypeMismatch("not enough operands for operation div")
-
-def mod_operation():
-    if len(op_stack) >= 2 and is_int(op_stack[-1]) and is_int(op_stack[-2]):
-        op1 = op_stack.pop()
-        op2 = op_stack.pop()
-        if op1 == 0:
-            raise DivByZero("dividing by zero is invalid")
-        res = op2 % op1  # rev bc postfix, so { 1 2 mod } == 1 % 2 
-        op_stack.append(res)
-    else:
-        raise TypeMismatch("not enough operands for operation mod")
-
+        raise TypeMismatch("not enough operands for operation binary")
+        
 def unary_operation(op: Callable):
     if len(op_stack) >= 1 and is_num(op_stack[-1]):
         op_stack[-1] = op(op_stack[-1])
     else:
         raise StackUnderflow(f"not enough operands for operation {op.__name__}")
+
+def div_operation():
+    binary_operation(div)
+
+def idiv_operation():
+    binary_operation(idiv)
+
+def mod_operation():
+    binary_operation(mod)
+    
+def add_operation():
+    binary_operation(lambda x, y: x + y)
+    
+def sub_operation():
+    binary_operation(lambda x, y: x - y)
 
 def abs_operation():
     unary_operation(abs)
