@@ -2,6 +2,7 @@ import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow
 from utils import is_num, is_int
 import math
+from typing import Callable
 logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
@@ -81,35 +82,26 @@ def mod_operation():
     else:
         raise TypeMismatch("not enough operands for operation mod")
 
-def abs_operation():
+def unary_operation(op: Callable):
     if len(op_stack) >= 1 and is_num(op_stack[-1]):
-        op_stack[-1] = abs(op_stack[-1])
+        op_stack[-1] = op(op_stack[-1])
     else:
-        raise StackUnderflow("not enough operands for operation abs")
+        raise StackUnderflow(f"not enough operands for operation {op.__name__}")
+
+def abs_operation():
+    unary_operation(abs)
 
 def neg_operation():
-    if len(op_stack) >= 1 and is_num(op_stack[-1]):
-        op_stack[-1] = -op_stack[-1]
-    else:
-        raise StackUnderflow("not enough operands for operation neg")
+    unary_operation(lambda x: -x)
 
 def ceil_operation():
-    if len(op_stack) >= 1 and is_num(op_stack[-1]):
-        op_stack[-1] = math.ceil(op_stack[-1])
-    else:
-        raise StackUnderflow("not enough operands for operation ceil")
+    unary_operation(math.ceil)
 
 def floor_operation():
-    if len(op_stack) >= 1 and is_num(op_stack[-1]):
-        op_stack[-1] = math.floor(op_stack[-1])
-    else:
-        raise StackUnderflow("not enough operands for operation floor")
+    unary_operation(math.floor)
 
 def round_operation():
-    if len(op_stack) >= 1 and is_num(op_stack[-1]):
-        op_stack[-1] = round(op_stack[-1])
-    else:
-        raise StackUnderflow("not enough operands for operation round")
+    unary_operation(round)
 
 def sqrt_operation():
     if len(op_stack) >= 1 and is_num(op_stack[-1]):
