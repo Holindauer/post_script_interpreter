@@ -2,6 +2,8 @@ import psip
 from exceptions import DivByZero, StackUnderflow
 import random
 import math
+from dict_with_capacity import DictWithCapacity
+
 def two_random_numbers():
 	two_nums = (random.randint(0, 100), random.randint(0, 100))
 	two_nums_str = (str(two_nums[0]), str(two_nums[1]))
@@ -168,3 +170,25 @@ def test_dynamic_scoping():
 		psip.process_input(i)
 	psip.lookup_in_dictionary("x", dynamic_scoping=True)
 	assert psip.op_stack[-1] == 2
+
+def test_dict_with_capacity():
+	d = DictWithCapacity(1)
+	d["x"] = 1
+	try:
+		d["y"] = 2
+		assert False
+	except Exception as e:
+		assert str(e) == "dict is full"
+
+def test_dictionary_capacity():
+	psip.op_stack.clear()
+	psip.process_input("1")
+	psip.process_input("dict")
+	psip.process_input("begin")
+	psip.process_input("/x")
+	psip.process_input("1")
+	psip.process_input("def")
+	psip.process_input("/x2")
+	psip.process_input("1")
+	psip.process_input("def")
+	assert len(psip.dict_stack[-1]) == 1

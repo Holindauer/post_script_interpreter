@@ -3,6 +3,7 @@ from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
 from utils import is_num, is_int
 import math
 from typing import Callable
+from dict_with_capacity import DictWithCapacity
 logging.basicConfig(level=logging.DEBUG)
 # logging.basicConfig(level=logging.INFO)
 
@@ -32,11 +33,15 @@ def def_operation():
         raise TypeMismatch("not enough operands for operation add")
 
 def dict_operation():
-    new_scope = {}
-    op_stack.append(new_scope)
+    if len(op_stack) >= 1 and is_int(op_stack[-1]):
+        capacity = op_stack.pop()
+        new_scope = DictWithCapacity(capacity)
+        op_stack.append(new_scope)
+    else:
+        raise TypeMismatch("integer capacity must be provided")
 
 def begin_operation():
-    if len(op_stack) >= 1 and isinstance(op_stack[-1], dict):
+    if len(op_stack) >= 1 and isinstance(op_stack[-1], DictWithCapacity):
         new_scope = op_stack.pop()
         dict_stack.append(new_scope)
     else:
