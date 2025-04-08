@@ -154,3 +154,17 @@ def test_copy_operation():
 	psip.process_input("3")
 	psip.process_input("copy")
 	assert psip.op_stack == [1, 2, 3, 1, 2, 3]
+
+def test_dynamic_scoping():
+	psip.op_stack.clear()
+	input = [
+		r"/x", "1", "def",     # defined in global
+		"1", "dict", "begin",  # start new dict
+		r"/x", "2", "def",     # redef x in this scope
+		"1", "dict", "begin",  # new scope
+		"x",                   # put x onto the stack
+	]
+	for i in input:
+		psip.process_input(i)
+	psip.lookup_in_dictionary("x", dynamic_scoping=True)
+	assert psip.op_stack[-1] == 2

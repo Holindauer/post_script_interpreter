@@ -31,6 +31,23 @@ def def_operation():
     else:
         raise TypeMismatch("not enough operands for operation add")
 
+def dict_operation():
+    new_scope = {}
+    op_stack.append(new_scope)
+
+def begin_operation():
+    if len(op_stack) >= 1 and isinstance(op_stack[-1], dict):
+        new_scope = op_stack.pop()
+        dict_stack.append(new_scope)
+    else:
+        raise TypeMismatch("top stack element must be dictionary to begin")
+
+def end_dict_operation():
+    if len(dict_stack) > 1:
+        dict_stack.pop()
+    else:
+        raise StackUnderflow("cannot erase global scope")
+
 def div(x, y):
     return x / y
 def idiv(x, y):
@@ -86,10 +103,7 @@ def round_operation():
     unary_operation(round)
 
 def sqrt_operation():
-    if len(op_stack) >= 1 and is_num(op_stack[-1]):
-        op_stack[-1] = math.sqrt(op_stack[-1])
-    else:
-        raise StackUnderflow("not enough operands for operation sqrt")
+    unary_operation(math.sqrt)
 
 def dup_operation():
     """duplicates the top stack element"""
@@ -167,18 +181,29 @@ dict_stack[-1]["copy"] = copy_operation
 # input operations
 dict_stack[-1]["="] = pop_and_print
 
+# dictionary operations
 
-def lookup_in_dictionary(input):
-    top_dict = dict_stack[-1] # current scope
-    if input in top_dict:
-        value = top_dict[input]
-        if callable(value): # checks if python func
-            value()
-        elif isinstance(value, list):
-            for item in value:
-                process_input(item)
-        else:
-            op_stack.append(value)
+dict_stack[-1]["dict"] = dict_operation
+dict_stack[-1]["begin"] = begin_operation
+dict_stack[-1]["end"] = end_dict_operation
+
+def lookup_in_dictionary(input, dynamic_scoping=True):
+
+    if dynamic_scoping:
+        for scope in dict_stack[::-1]:
+            if input in scope:
+                value = scope[input]
+                if callable(value): # checks if python func
+                    value()
+                elif isinstance(value, list):
+                    for item in value:
+                        process_input(item)
+                else:
+                    op_stack.append(value)    
+                return
+
+    elif not dynamic_scoping:
+        raise Exception("Not Implemented Yet")                    
     else:
         raise ParseFailed("input {input} is not in dictionary")
 
