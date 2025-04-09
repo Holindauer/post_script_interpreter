@@ -185,6 +185,39 @@ def copy_operation():
     else:
         raise StackUnderflow("not enough operands for operation copy")
 
+def ne_operation():
+    pass
+
+def eq_operation():
+    pass
+
+def ge_operation():
+    pass
+
+def gt_operation():
+    pass
+
+def le_operation():
+    pass
+
+def lt_operation():
+    pass
+
+def and_operation():
+    pass
+
+def not_operation():
+    pass
+
+def or_operation():
+    pass
+
+def true_operation():
+    pass
+
+def false_operation():
+    pass
+    
 # add arithmetic operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
 dict_stack[-1]["def"] = def_operation
@@ -216,6 +249,14 @@ dict_stack[-1]["begin"] = begin_operation
 dict_stack[-1]["end"] = end_dict_operation
 dict_stack[-1]["length"] = length_operation
 dict_stack[-1]["maxlength"] = maxlength_operation
+
+# TODO Boolean operations
+
+# TODO String operations
+
+# TODO control flow operations
+
+# TODO IO operations
 
 def lookup_in_dictionary(input, dynamic_scoping=True):
 
