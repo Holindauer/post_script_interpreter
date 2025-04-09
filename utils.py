@@ -6,3 +6,6 @@ def is_int(x) -> bool:
 
 def is_bool(x) -> bool:
     return isinstance(x, bool)
+
+def is_string(x) -> bool:
+    return isinstance(x, str)

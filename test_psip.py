@@ -295,3 +295,22 @@ def test_dictionary_maxlength():
 
 	print(psip.op_stack[-1])
 	assert psip.op_stack[-1] == 10
+
+def test_string():
+	psip.op_stack.clear()
+	psip.process_input("(hello)")
+	assert psip.op_stack[-1] == "hello"
+
+def test_string_length():
+	psip.op_stack.clear()
+	string = "hello"
+	psip.process_input(f"({string})")
+	psip.process_input("length")
+	assert psip.op_stack[-1] == len(string)
+
+def test_get_operation():
+	psip.op_stack.clear()
+	psip.process_input("(hello)")
+	psip.process_input("1")
+	psip.process_input("get")
+	assert psip.op_stack[-1] == ord("e")

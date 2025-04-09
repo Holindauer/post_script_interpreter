@@ -1,6 +1,6 @@
 import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
-from utils import is_num, is_int, is_bool
+from utils import is_num, is_int, is_bool, is_string
 import math
 from typing import Callable
 from dict_with_capacity import DictWithCapacity
@@ -64,6 +64,8 @@ def length_operation():
     is_dict = isinstance(op_stack[-1], dict)
     is_dict_with_capacity = isinstance(op_stack[-1], DictWithCapacity)
     if is_dict or is_dict_with_capacity:
+        op_stack.append(len(op_stack[-1]))
+    elif is_string(op_stack[-1]):
         op_stack.append(len(op_stack[-1]))
     else: 
         raise TypeMismatch("top stack element must be collection to length")
@@ -222,6 +224,22 @@ def copy_operation():
     else:
         raise StackUnderflow("not enough operands for operation copy")
     
+def get_operation():
+    """
+    returns ascii code of the selected index of a str
+    string index get
+    """
+    if not (len(op_stack) >= 2):
+        raise StackUnderflow("not enough operands for operation get")
+    elif is_string(op_stack[-2]) and is_int(op_stack[-1]):
+        index = op_stack.pop()
+        string = op_stack.pop()
+        ascii = ord(string[index])
+        op_stack.append(ascii)
+    else:
+        raise TypeMismatch("not enough operands for operation get")
+
+
 # add arithmetic operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
 dict_stack[-1]["def"] = def_operation
@@ -267,6 +285,8 @@ dict_stack[-1]["true"] = true_operation
 dict_stack[-1]["false"] = false_operation
 
 # TODO String operations
+dict_stack[-1]["length"] = length_operation
+dict_stack[-1]["get"] = get_operation
 
 # TODO control flow operations
 
@@ -329,6 +349,13 @@ def process_code_block(input):
     else:
         raise ParseFailed("can't parse this into the code block")
     
+def process_string(input):
+    logging.debug(f"Input to process number: {input}")
+    if len(input) >= 2 and input.startswith("(") and input.endswith(")"):
+        return input[1:-1]
+    else:
+        raise ParseFailed("can't parse this into string")
+    
 def process_name_constant(input):
     logging.debug(f"Input to process number: {input}")
     if input.startswith("/"):
@@ -340,7 +367,8 @@ PARSERS = [
     process_boolean,
     process_number,
     process_code_block,
-    process_name_constant
+    process_name_constant,
+    process_string
 ]
 
 def process_constants(input):
