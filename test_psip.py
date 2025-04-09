@@ -208,3 +208,18 @@ def test_dictionary_length():
 
 	print(psip.op_stack[-1])
 	assert psip.op_stack[-1] == 2
+
+	psip.process_input("end")
+
+
+def test_dictionary_maxlength():
+	psip.op_stack.clear()
+	input = [
+		r"/d", "10", "dict", "def",
+		"d", "maxlength"
+	]
+	for command in input:
+		psip.process_input(command)
+
+	print(psip.op_stack[-1])
+	assert psip.op_stack[-1] == 10

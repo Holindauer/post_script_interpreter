@@ -66,7 +66,16 @@ def length_operation():
     if is_dict or is_dict_with_capacity:
         op_stack.append(len(op_stack[-1]))
     else: 
-        raise TypeMismatch("top stack element must be dictionary to begin")
+        raise TypeMismatch("top stack element must be collection to length")
+
+def maxlength_operation():
+    if not (len(op_stack) >= 1):
+        raise StackUnderflow("not enough operands for operation length")
+    if  isinstance(op_stack[-1], DictWithCapacity): # only user defined dictationaries have capacity
+        op_stack.append(op_stack[-1].capacity)
+    else: 
+        raise TypeMismatch("top stack element must be collection to maxlength")
+
 
 def div(x, y):
     return x / y
@@ -205,8 +214,8 @@ dict_stack[-1]["="] = pop_and_print
 dict_stack[-1]["dict"] = dict_operation
 dict_stack[-1]["begin"] = begin_operation
 dict_stack[-1]["end"] = end_dict_operation
-
 dict_stack[-1]["length"] = length_operation
+dict_stack[-1]["maxlength"] = maxlength_operation
 
 def lookup_in_dictionary(input, dynamic_scoping=True):
 
