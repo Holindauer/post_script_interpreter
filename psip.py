@@ -1,6 +1,6 @@
 import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
-from utils import is_num, is_int
+from utils import is_num, is_int, is_bool
 import math
 from typing import Callable
 from dict_with_capacity import DictWithCapacity
@@ -96,10 +96,14 @@ def binary_operation(op: Callable):
         raise TypeMismatch("not enough operands for operation binary")
         
 def unary_operation(op: Callable):
-    if len(op_stack) >= 1 and is_num(op_stack[-1]):
+    if not len(op_stack) >= 1:
+        raise StackUnderflow(f"not enough operands for operation {op.__name__}")
+    elif is_num(op_stack[-1]):
+        op_stack[-1] = op(op_stack[-1])
+    elif is_bool(op_stack[-1]):
         op_stack[-1] = op(op_stack[-1])
     else:
-        raise StackUnderflow(f"not enough operands for operation {op.__name__}")
+        raise TypeMismatch("top stack element must be number to apply operation")
 
 def div_operation():
     binary_operation(div)
@@ -133,6 +137,39 @@ def round_operation():
 
 def sqrt_operation():
     unary_operation(math.sqrt)
+
+def ne_operation():
+    binary_operation(lambda x, y: x != y)
+
+def eq_operation():
+    binary_operation(lambda x, y: x == y)
+
+def ge_operation():
+    binary_operation(lambda x, y: x >= y)
+
+def gt_operation():
+    binary_operation(lambda x, y: x > y)
+
+def le_operation():
+    binary_operation(lambda x, y: x <= y)
+
+def lt_operation():
+    binary_operation(lambda x, y: x < y)
+
+def and_operation():
+    binary_operation(lambda x, y: x and y)
+
+def not_operation():
+    unary_operation(lambda x: not x)
+
+def or_operation():
+    binary_operation(lambda x, y: x or y)
+
+def true_operation():
+    op_stack.append(True)
+
+def false_operation():
+    op_stack.append(False)
 
 def dup_operation():
     """duplicates the top stack element"""
@@ -184,39 +221,6 @@ def copy_operation():
             op_stack.extend(elements_to_copy)
     else:
         raise StackUnderflow("not enough operands for operation copy")
-
-def ne_operation():
-    pass
-
-def eq_operation():
-    pass
-
-def ge_operation():
-    pass
-
-def gt_operation():
-    pass
-
-def le_operation():
-    pass
-
-def lt_operation():
-    pass
-
-def and_operation():
-    pass
-
-def not_operation():
-    pass
-
-def or_operation():
-    pass
-
-def true_operation():
-    pass
-
-def false_operation():
-    pass
     
 # add arithmetic operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
@@ -250,7 +254,17 @@ dict_stack[-1]["end"] = end_dict_operation
 dict_stack[-1]["length"] = length_operation
 dict_stack[-1]["maxlength"] = maxlength_operation
 
-# TODO Boolean operations
+# boolean operations
+dict_stack[-1]["ne"] = ne_operation
+dict_stack[-1]["eq"] = eq_operation
+dict_stack[-1]["ge"] = ge_operation
+dict_stack[-1]["gt"] = gt_operation
+dict_stack[-1]["le"] = le_operation
+dict_stack[-1]["lt"] = lt_operation
+dict_stack[-1]["or"] = or_operation
+dict_stack[-1]["not"] = not_operation
+dict_stack[-1]["true"] = true_operation
+dict_stack[-1]["false"] = false_operation
 
 # TODO String operations
 

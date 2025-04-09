@@ -33,6 +33,62 @@ def test_sub_operation():
 	psip.process_input("sub")
 	assert psip.op_stack[-1] == two_nums[0] - two_nums[1]
 
+def test_ne_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("ne")
+	assert psip.op_stack[-1] == (two_nums[0] != two_nums[1])
+
+def test_eq_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("eq")
+	assert psip.op_stack[-1] == (two_nums[0] == two_nums[1])
+
+def test_ge_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("ge")
+	assert psip.op_stack[-1] == (two_nums[0] >= two_nums[1])
+
+def test_gt_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("gt")
+	assert psip.op_stack[-1] == (two_nums[0] > two_nums[1])
+
+def test_le_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("le")
+	assert psip.op_stack[-1] == (two_nums[0] <= two_nums[1])
+
+def test_lt_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("lt")
+	assert psip.op_stack[-1] == (two_nums[0] < two_nums[1])
+
+def test_or_operation():
+	two_nums, two_nums_str = two_random_numbers()
+	psip.op_stack.clear()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("or")
+	assert psip.op_stack[-1] == (two_nums[0] or two_nums[1])
+
 def test_div_operation():
 	two_nums, two_nums_str = two_random_numbers()
 	psip.op_stack.clear()
@@ -72,6 +128,22 @@ def test_abs_operation():
 	psip.process_input(str(num))
 	psip.process_input("abs")
 	assert psip.op_stack[-1] == abs(num)
+
+def test_false():
+	psip.op_stack.clear()
+	psip.process_input("false")
+	assert psip.op_stack[-1] == False
+
+def test_true():
+	psip.op_stack.clear()
+	psip.process_input("true")
+	assert psip.op_stack[-1] == True
+
+def test_not_operation():
+	psip.op_stack.clear()
+	psip.process_input("true")
+	psip.process_input("not")
+	assert psip.op_stack[-1] == (not True)
 
 def test_neg_operation():
 	num = random.randint(-100, 100)
