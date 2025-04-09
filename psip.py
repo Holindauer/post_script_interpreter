@@ -4,8 +4,8 @@ from utils import is_num, is_int
 import math
 from typing import Callable
 from dict_with_capacity import DictWithCapacity
-logging.basicConfig(level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 op_stack = []   # type: ignore
 dict_stack = [] # type: ignore
@@ -18,6 +18,9 @@ def repl():
             break
         process_input(user_input)
         logging.debug(f"Operand Stack: {op_stack}")
+        logging.debug(f"Dictionary Stack: {dict_stack}")
+        logging.info(f"\n\nOperand Stack: {op_stack}")
+        logging.info(f"Dictionary Stack: {dict_stack}")
 
 def def_operation():
     if len(op_stack) >= 2:
@@ -52,6 +55,18 @@ def end_dict_operation():
         dict_stack.pop()
     else:
         raise StackUnderflow("cannot erase global scope")
+
+def length_operation():
+
+    if not (len(op_stack) >= 1):
+        raise StackUnderflow("not enough operands for operation length")
+
+    is_dict = isinstance(op_stack[-1], dict)
+    is_dict_with_capacity = isinstance(op_stack[-1], DictWithCapacity)
+    if is_dict or is_dict_with_capacity:
+        op_stack.append(len(op_stack[-1]))
+    else: 
+        raise TypeMismatch("top stack element must be dictionary to begin")
 
 def div(x, y):
     return x / y
@@ -187,10 +202,11 @@ dict_stack[-1]["copy"] = copy_operation
 dict_stack[-1]["="] = pop_and_print
 
 # dictionary operations
-
 dict_stack[-1]["dict"] = dict_operation
 dict_stack[-1]["begin"] = begin_operation
 dict_stack[-1]["end"] = end_dict_operation
+
+dict_stack[-1]["length"] = length_operation
 
 def lookup_in_dictionary(input, dynamic_scoping=True):
 

@@ -192,3 +192,19 @@ def test_dictionary_capacity():
 	psip.process_input("1")
 	psip.process_input("def")
 	assert len(psip.dict_stack[-1]) == 1
+	psip.process_input("end")
+
+def test_dictionary_length():
+	psip.op_stack.clear()
+	input = [
+		r"/d", "10", "dict", "def",
+		"d", "begin",
+		r"/x", "1", "def",
+		r"/y", "3", "def",
+		"d", "length"
+	]
+	for command in input:
+		psip.process_input(command)
+
+	print(psip.op_stack[-1])
+	assert psip.op_stack[-1] == 2
