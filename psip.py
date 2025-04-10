@@ -13,14 +13,15 @@ dict_stack.append({}) # global dict
 
 def repl():
     while True:
-        user_input = input("REPL> ")
-        if user_input.lower() == "quit":
-            break
-        process_input(user_input)
-        logging.debug(f"Operand Stack: {op_stack}")
-        logging.debug(f"Dictionary Stack: {dict_stack}")
-        logging.info(f"\n\nOperand Stack: {op_stack}")
-        logging.info(f"Dictionary Stack: {dict_stack}")
+        user_input = input("REPL> ").split()
+        for token in user_input:
+            if token.lower() == "quit":
+                break
+            process_input(token)
+            logging.debug(f"Operand Stack: {op_stack}")
+            logging.debug(f"Dictionary Stack: {dict_stack}")
+            logging.info(f"\n\nOperand Stack: {op_stack}")
+            logging.info(f"Dictionary Stack: {dict_stack}")
 
 def def_operation():
     if len(op_stack) >= 2:
