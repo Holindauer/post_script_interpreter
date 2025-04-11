@@ -2,7 +2,7 @@ import psip
 from exceptions import DivByZero, StackUnderflow
 import random
 import math
-from dict_with_capacity import DictWithCapacity
+from utils import DictWithCapacity
 
 def two_random_numbers():
 	two_nums = (random.randint(0, 100), random.randint(0, 100))
@@ -299,7 +299,7 @@ def test_dictionary_maxlength():
 def test_string():
 	psip.op_stack.clear()
 	psip.process_input("(hello)")
-	assert psip.op_stack[-1] == "hello"
+	assert psip.op_stack[-1].string == "hello"
 
 def test_string_length():
 	psip.op_stack.clear()
@@ -314,3 +314,20 @@ def test_get_operation():
 	psip.process_input("1")
 	psip.process_input("get")
 	assert psip.op_stack[-1] == ord("e")
+
+def test_getinterval_operation():
+	psip.op_stack.clear()
+	psip.process_input("(hello)")
+	psip.process_input("1")
+	psip.process_input("3")
+	psip.process_input("getinterval")
+	assert psip.op_stack[-1] == "ell"
+
+def test_putinterval_operation():
+	psip.op_stack.clear()
+	psip.process_input("(hello)")
+	psip.process_input("dup")
+	psip.process_input("1")
+	psip.process_input("(hi)")
+	psip.process_input("putinterval")
+	assert psip.op_stack[-1].string == "hhilo"

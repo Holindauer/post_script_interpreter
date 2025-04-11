@@ -1,9 +1,9 @@
 import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
-from utils import is_num, is_int, is_bool, is_string
+from utils import is_num, is_int, is_bool, is_mutable_string, DictWithCapacity, MutableString
 import math
 from typing import Callable
-from dict_with_capacity import DictWithCapacity
+
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 
@@ -66,8 +66,8 @@ def length_operation():
     is_dict_with_capacity = isinstance(op_stack[-1], DictWithCapacity)
     if is_dict or is_dict_with_capacity:
         op_stack.append(len(op_stack[-1]))
-    elif is_string(op_stack[-1]):
-        op_stack.append(len(op_stack[-1]))
+    elif is_mutable_string(op_stack[-1]):
+        op_stack.append(len(op_stack[-1].string))
     else: 
         raise TypeMismatch("top stack element must be collection to length")
 
@@ -232,15 +232,39 @@ def get_operation():
     """
     if not (len(op_stack) >= 2):
         raise StackUnderflow("not enough operands for operation get")
-    elif is_string(op_stack[-2]) and is_int(op_stack[-1]):
+    elif is_mutable_string(op_stack[-2]) and is_int(op_stack[-1]):
         index = op_stack.pop()
-        string = op_stack.pop()
+        string = op_stack.pop().string
         ascii = ord(string[index])
         op_stack.append(ascii)
     else:
         raise TypeMismatch("not enough operands for operation get")
 
+def getinterval_operation():
+    if not (len(op_stack) >= 3):
+        raise StackUnderflow("not enough operands for operation getinterval")
+    elif is_mutable_string(op_stack[-3]) and is_int(op_stack[-2]) and is_int(op_stack[-1]):
+        end = op_stack.pop()
+        start = op_stack.pop()
+        string = op_stack.pop().string
+        op_stack.append(string[start:end+1])
+    else:
+        raise TypeMismatch("not enough operands for operation getinterval")
 
+def put_interval_operation():
+    """ string1 index string2 putinterval"""
+    if not (len(op_stack) >= 3):
+        raise StackUnderflow("not enough operands for operation putinterval")
+    elif is_mutable_string(op_stack[-3]) and is_int(op_stack[-2]) and is_mutable_string(op_stack[-1]):
+        string2 = op_stack.pop()  
+        index = op_stack.pop()    
+        string1 = op_stack.pop()  
+        
+        # Modify string1 in place
+        string1.putinterval(index, string2.string)
+    else:
+        raise TypeMismatch("not enough operands for operation putinterval")
+            
 # add arithmetic operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
 dict_stack[-1]["def"] = def_operation
@@ -288,6 +312,8 @@ dict_stack[-1]["false"] = false_operation
 # TODO String operations
 dict_stack[-1]["length"] = length_operation
 dict_stack[-1]["get"] = get_operation
+dict_stack[-1]["getinterval"] = getinterval_operation
+dict_stack[-1]["putinterval"] = put_interval_operation
 
 # TODO control flow operations
 
@@ -353,7 +379,7 @@ def process_code_block(input):
 def process_string(input):
     logging.debug(f"Input to process number: {input}")
     if len(input) >= 2 and input.startswith("(") and input.endswith(")"):
-        return input[1:-1]
+        return MutableString(input[1:-1])
     else:
         raise ParseFailed("can't parse this into string")
     
