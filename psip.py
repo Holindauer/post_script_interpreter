@@ -1,8 +1,9 @@
 import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
-from utils import is_num, is_int, is_bool, is_mutable_string, DictWithCapacity, MutableString
+from utils import is_num, is_int, is_bool, is_list, is_mutable_string, DictWithCapacity, MutableString
 import math
 from typing import Callable
+import re
 
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +14,7 @@ dict_stack.append({}) # global dict
 
 def repl():
     while True:
-        user_input = input("REPL> ").split()
+        user_input = lexer(input("REPL> "))
         for token in user_input:
             if token.lower() == "quit":
                 break
@@ -22,6 +23,10 @@ def repl():
             logging.debug(f"Dictionary Stack: {dict_stack}")
             logging.info(f"\n\nOperand Stack: {op_stack}")
             logging.info(f"Dictionary Stack: {dict_stack}")
+
+def lexer(input):
+    """regex to get tokens from () {} or atomic whitespace seperated tokens"""
+    return re.findall(r'(\(.*?\)|\{.*?\}|\S+)', input)
 
 def def_operation():
     if len(op_stack) >= 2:
@@ -238,7 +243,7 @@ def get_operation():
         ascii = ord(string[index])
         op_stack.append(ascii)
     else:
-        raise TypeMismatch("not enough operands for operation get")
+        raise TypeMismatch("Wrong operands for operation get")
 
 def getinterval_operation():
     if not (len(op_stack) >= 3):
@@ -249,7 +254,7 @@ def getinterval_operation():
         string = op_stack.pop().string
         op_stack.append(string[start:end+1])
     else:
-        raise TypeMismatch("not enough operands for operation getinterval")
+        raise TypeMismatch("Wrong operands for operation getinterval")
 
 def put_interval_operation():
     """ string1 index string2 putinterval"""
@@ -263,8 +268,33 @@ def put_interval_operation():
         # Modify string1 in place
         string1.putinterval(index, string2.string)
     else:
-        raise TypeMismatch("not enough operands for operation putinterval")
+        raise TypeMismatch("Wrong operands for operation putinterval")
             
+def if_operation():
+    if not (len(op_stack) >= 2):
+        raise StackUnderflow("not enough operands for operation if")
+    elif is_list(op_stack[-1]) and is_bool(op_stack[-2]):
+        process = op_stack.pop()
+        boolean = op_stack.pop()
+        if boolean:
+            for item in process:
+                process_input(item)
+    else:
+        raise TypeMismatch("Wrong operands for operation if")
+
+def ifelse_operation():
+    pass
+
+def for_operation():
+    pass
+
+def repeat_operation():
+    pass
+
+def quit_operation():
+    pass
+
+
 # add arithmetic operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
 dict_stack[-1]["def"] = def_operation
@@ -316,6 +346,7 @@ dict_stack[-1]["getinterval"] = getinterval_operation
 dict_stack[-1]["putinterval"] = put_interval_operation
 
 # TODO control flow operations
+dict_stack[-1]["if"] = if_operation
 
 # TODO IO operations
 

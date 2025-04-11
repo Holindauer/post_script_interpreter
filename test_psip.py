@@ -331,3 +331,17 @@ def test_putinterval_operation():
 	psip.process_input("(hi)")
 	psip.process_input("putinterval")
 	assert psip.op_stack[-1].string == "hhilo"
+
+def test_if_operation_true():
+	psip.op_stack.clear()
+	input = "true", "{1 2 add}", "if"
+	for command in input:
+		psip.process_input(command)
+	assert psip.op_stack[-1] == 3
+
+def test_if_operation_false():
+	psip.op_stack.clear()
+	input = "false", "{1 2 add}", "if"
+	for command in input:
+		psip.process_input(command)
+	assert len(psip.op_stack) == 0

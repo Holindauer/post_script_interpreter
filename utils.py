@@ -13,6 +13,9 @@ def is_string(x) -> bool:
 def is_mutable_string(x) -> bool:
     return isinstance(x, MutableString)
 
+def is_list(x) -> bool:
+    return isinstance(x, list)
+
 class MutableString:
     """Python strings but mutable"""
     def __init__(self, string):
