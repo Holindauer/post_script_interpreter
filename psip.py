@@ -155,6 +155,22 @@ def pop_and_print():
     check_op_stack_underflow(1, "pop")
     print(op_stack.pop())
 
+def double_equal_operation():
+    check_op_stack_underflow(1, "==")
+    op = op_stack.pop()
+    if is_mutable_string(op):
+        print(f"({op})")
+    else:
+        print(op)
+
+def print_operation():
+    check_op_stack_underflow(1, "print")
+    if is_mutable_string(op_stack[-1]):
+        print(f"{op_stack.pop()}")
+        return
+    
+    raise TypeMismatch("top stack element must be string to print")
+
 def count_operation():
     op_stack.append(len(op_stack))
 
@@ -255,8 +271,10 @@ dict_stack[-1]["clear"] = clear_operation
 dict_stack[-1]["count"] = count_operation
 dict_stack[-1]["copy"] = copy_operation
 
-# input operations
+# io operations
 dict_stack[-1]["="] = pop_and_print
+dict_stack[-1]["=="] = double_equal_operation
+dict_stack[-1]["print"] = print_operation
 
 # dictionary operations
 dict_stack[-1]["dict"] = dict_operation
@@ -288,8 +306,6 @@ dict_stack[-1]["if"] = if_operation
 dict_stack[-1]["ifelse"] = ifelse_operation
 dict_stack[-1]["for"] = for_operation
 dict_stack[-1]["repeat"] = repeat_operation
-
-# TODO IO operations
 
 def lookup_in_dictionary(input, dynamic_scoping=True):
 
