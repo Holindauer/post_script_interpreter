@@ -345,3 +345,17 @@ def test_if_operation_false():
 	for command in input:
 		psip.process_input(command)
 	assert len(psip.op_stack) == 0
+
+def test_ifelse_operation_true():
+	psip.op_stack.clear()
+	input = "true", "{1 2 add}", "{2 2 add}", "ifelse"
+	for command in input:
+		psip.process_input(command)
+	assert psip.op_stack[-1] == 3
+
+def test_ifelse_operation_false():
+	psip.op_stack.clear()
+	input = "false", "{1 2 add}", "{2 2 add}", "ifelse"
+	for command in input:
+		psip.process_input(command)
+	assert psip.op_stack[-1] == 4

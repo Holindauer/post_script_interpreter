@@ -8,8 +8,8 @@ import re
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 
-op_stack = []   # type: ignore
-dict_stack = [] # type: ignore
+op_stack = []         # type: ignore
+dict_stack = []       # type: ignore
 dict_stack.append({}) # global dict 
 
 def repl():
@@ -28,45 +28,48 @@ def lexer(input):
     """regex to get tokens from () {} or atomic whitespace seperated tokens"""
     return re.findall(r'(\(.*?\)|\{.*?\}|\S+)', input)
 
+def check_op_stack_underflow(expected_length: int, attempted_op: str):
+    if len(op_stack) < expected_length:
+        raise StackUnderflow(f"not enough operands for operation {attempted_op}")
+    
+def check_dict_stack_underflow(expected_length: int, attempted_op: str):
+    if len(dict_stack) < expected_length:
+        raise StackUnderflow(f"not enough dictionaries for operation {attempted_op}")
+
 def def_operation():
-    if len(op_stack) >= 2:
-        value = op_stack.pop()
-        name = op_stack.pop()
-        if isinstance(name, str) and name.startswith("/"):
-            key = name[1:]
-            dict_stack[-1][key] = value
-        else: 
-            op_stack.append(name)
-            op_stack.append(value)
-    else:
+    check_op_stack_underflow(2, "def")
+    value, name = op_stack.pop(), op_stack.pop()
+    if isinstance(name, str) and name.startswith("/"):
+        key = name[1:]
+        dict_stack[-1][key] = value
+    else: 
+        op_stack.append(name)
+        op_stack.append(value)
         raise TypeMismatch("not enough operands for operation add")
 
 def dict_operation():
-    if len(op_stack) >= 1 and is_int(op_stack[-1]):
+    check_op_stack_underflow(1, "dict")
+    if is_int(op_stack[-1]):
         capacity = op_stack.pop()
         new_scope = DictWithCapacity(capacity)
         op_stack.append(new_scope)
     else:
-        raise TypeMismatch("integer capacity must be provided")
+        raise TypeMismatch("integer capacity must be provided")     
 
 def begin_operation():
-    if len(op_stack) >= 1 and isinstance(op_stack[-1], DictWithCapacity):
+    check_op_stack_underflow(1, "begin")
+    if isinstance(op_stack[-1], DictWithCapacity):
         new_scope = op_stack.pop()
         dict_stack.append(new_scope)
     else:
         raise TypeMismatch("top stack element must be dictionary to begin")
 
 def end_dict_operation():
-    if len(dict_stack) > 1:
-        dict_stack.pop()
-    else:
-        raise StackUnderflow("cannot erase global scope")
+    check_dict_stack_underflow(1, "end")
+    dict_stack.pop()
 
 def length_operation():
-
-    if not (len(op_stack) >= 1):
-        raise StackUnderflow("not enough operands for operation length")
-
+    check_op_stack_underflow(1, "length")
     is_dict = isinstance(op_stack[-1], dict)
     is_dict_with_capacity = isinstance(op_stack[-1], DictWithCapacity)
     if is_dict or is_dict_with_capacity:
@@ -77,23 +80,20 @@ def length_operation():
         raise TypeMismatch("top stack element must be collection to length")
 
 def maxlength_operation():
-    if not (len(op_stack) >= 1):
-        raise StackUnderflow("not enough operands for operation length")
+    check_op_stack_underflow(1, "maxlength")
     if  isinstance(op_stack[-1], DictWithCapacity): # only user defined dictationaries have capacity
         op_stack.append(op_stack[-1].capacity)
     else: 
         raise TypeMismatch("top stack element must be collection to maxlength")
 
-
-def div(x, y):
-    return x / y
-def idiv(x, y):
-    return x // y
-def mod(x, y):
-    return x % y
+# operations that may div by zero
+div = lambda x, y: x / y
+idiv = lambda x, y: x // y
+mod = lambda x, y: x % y
 
 def binary_operation(op: Callable):
-    if len(op_stack) >= 2 and is_num(op_stack[-1]) and is_num(op_stack[-2]):
+    check_op_stack_underflow(2, op.__name__)
+    if is_num(op_stack[-1]) and is_num(op_stack[-2]):
         op1 = op_stack.pop()
         if op1 == 0 and (op in [div, idiv, mod]):
             raise DivByZero("dividing by zero is invalid")
@@ -104,140 +104,71 @@ def binary_operation(op: Callable):
         raise TypeMismatch("not enough operands for operation binary")
         
 def unary_operation(op: Callable):
-    if not len(op_stack) >= 1:
-        raise StackUnderflow(f"not enough operands for operation {op.__name__}")
-    elif is_num(op_stack[-1]):
+    check_op_stack_underflow(1, op.__name__)
+    if is_num(op_stack[-1]):
         op_stack[-1] = op(op_stack[-1])
     elif is_bool(op_stack[-1]):
         op_stack[-1] = op(op_stack[-1])
     else:
         raise TypeMismatch("top stack element must be number to apply operation")
 
-def div_operation():
-    binary_operation(div)
-
-def idiv_operation():
-    binary_operation(idiv)
-
-def mod_operation():
-    binary_operation(mod)
-    
-def add_operation():
-    binary_operation(lambda x, y: x + y)
-    
-def sub_operation():
-    binary_operation(lambda x, y: x - y)
-
-def abs_operation():
-    unary_operation(abs)
-
-def neg_operation():
-    unary_operation(lambda x: -x)
-
-def ceil_operation():
-    unary_operation(math.ceil)
-
-def floor_operation():
-    unary_operation(math.floor)
-
-def round_operation():
-    unary_operation(round)
-
-def sqrt_operation():
-    unary_operation(math.sqrt)
-
-def ne_operation():
-    binary_operation(lambda x, y: x != y)
-
-def eq_operation():
-    binary_operation(lambda x, y: x == y)
-
-def ge_operation():
-    binary_operation(lambda x, y: x >= y)
-
-def gt_operation():
-    binary_operation(lambda x, y: x > y)
-
-def le_operation():
-    binary_operation(lambda x, y: x <= y)
-
-def lt_operation():
-    binary_operation(lambda x, y: x < y)
-
-def and_operation():
-    binary_operation(lambda x, y: x and y)
-
-def not_operation():
-    unary_operation(lambda x: not x)
-
-def or_operation():
-    binary_operation(lambda x, y: x or y)
-
-def true_operation():
-    op_stack.append(True)
-
-def false_operation():
-    op_stack.append(False)
+div_operation = lambda: binary_operation(div)
+idiv_operation = lambda: binary_operation(idiv)
+mod_operation = lambda: binary_operation(mod)
+add_operation = lambda: binary_operation(lambda x, y: x + y)
+sub_operation = lambda: binary_operation(lambda x, y: x - y)
+abs_operation = lambda: unary_operation(abs)
+neg_operation = lambda: unary_operation(lambda x: -x)
+ceil_operation = lambda: unary_operation(math.ceil)
+floor_operation = lambda: unary_operation(math.floor)
+round_operation = lambda: unary_operation(round)
+sqrt_operation = lambda: unary_operation(math.sqrt)
+ne_operation = lambda: binary_operation(lambda x, y: x != y)
+eq_operation = lambda: binary_operation(lambda x, y: x == y)
+ge_operation = lambda: binary_operation(lambda x, y: x >= y)
+gt_operation = lambda: binary_operation(lambda x, y: x > y)
+le_operation = lambda: binary_operation(lambda x, y: x <= y)
+lt_operation = lambda: binary_operation(lambda x, y: x < y)
+and_operation = lambda: binary_operation(lambda x, y: x and y)
+not_operation = lambda: unary_operation(lambda x: not x)
+or_operation = lambda: binary_operation(lambda x, y: x or y)
+true_operation = lambda: op_stack.append(True)
+false_operation = lambda: op_stack.append(False)
 
 def dup_operation():
-    """duplicates the top stack element"""
-    if len(op_stack) >= 1:
-        op1 = op_stack.pop()
-        op_stack.append(op1)
-        op_stack.append(op1)
-    else:
-        raise StackUnderflow("not enough operands for operation dup")
+    check_op_stack_underflow(1, "dup")
+    op_stack.append(op_stack[-1])
 
 def exch_operation():
-    """Exchanges top two stack elements"""
-    if len(op_stack) >= 2:
-        op1 = op_stack.pop()
-        op2 = op_stack.pop()
-        op_stack.append(op1)
-        op_stack.append(op2)
-    else:
-        raise StackUnderflow("not enough operands for operation exch")
+    check_op_stack_underflow(2, "exch")
+    op_stack.extend([op_stack.pop(), op_stack.pop()])
 
 def pop_operation():
     """rm top stack element"""
-    if len(op_stack) >= 1:
-        op_stack.pop()
-    else:
-        raise StackUnderflow("not enough operands for operation pop")
+    check_op_stack_underflow(1, "pop")
+    op_stack.pop()
 
 def clear_operation():
     op_stack.clear()
 
 def pop_and_print():
-    if(len(op_stack) >= 1):
-        op1 = op_stack.pop()
-        print(op1)
-    else:
-        raise TypeMismatch("Stack is empty! nothin to print")
-    
+    check_op_stack_underflow(1, "pop")
+    print(op_stack.pop())
+
 def count_operation():
-    stack_len = len(op_stack)
-    op_stack.append(stack_len)
+    op_stack.append(len(op_stack))
 
 def copy_operation():
-    """copies the top n elements"""
-    if len(op_stack) >= 1:
-        n = op_stack[-1]
-        if len(op_stack) - 1 >= n:
-            elements_to_copy = op_stack[:-1][::-1][:n+1][::-1]
-            op_stack.pop()
-            op_stack.extend(elements_to_copy)
-    else:
-        raise StackUnderflow("not enough operands for operation copy")
+    check_op_stack_underflow(1, "copy")
+    n = op_stack[-1]
+    check_op_stack_underflow(n, "copy")
+    elements_to_copy = op_stack[:-1][::-1][:n+1][::-1]
+    op_stack.pop()
+    op_stack.extend(elements_to_copy)
     
 def get_operation():
-    """
-    returns ascii code of the selected index of a str
-    string index get
-    """
-    if not (len(op_stack) >= 2):
-        raise StackUnderflow("not enough operands for operation get")
-    elif is_mutable_string(op_stack[-2]) and is_int(op_stack[-1]):
+    check_op_stack_underflow(2, "get")
+    if is_mutable_string(op_stack[-2]) and is_int(op_stack[-1]):
         index = op_stack.pop()
         string = op_stack.pop().string
         ascii = ord(string[index])
@@ -246,44 +177,40 @@ def get_operation():
         raise TypeMismatch("Wrong operands for operation get")
 
 def getinterval_operation():
-    if not (len(op_stack) >= 3):
-        raise StackUnderflow("not enough operands for operation getinterval")
-    elif is_mutable_string(op_stack[-3]) and is_int(op_stack[-2]) and is_int(op_stack[-1]):
-        end = op_stack.pop()
-        start = op_stack.pop()
-        string = op_stack.pop().string
-        op_stack.append(string[start:end+1])
+    check_op_stack_underflow(3, "getinterval")
+    if is_mutable_string(op_stack[-3]) and is_int(op_stack[-2]) and is_int(op_stack[-1]):
+        end, start, string = [op_stack.pop() for _ in range(3)]
+        op_stack.append(string.string[start:end+1])
     else:
         raise TypeMismatch("Wrong operands for operation getinterval")
 
 def put_interval_operation():
     """ string1 index string2 putinterval"""
-    if not (len(op_stack) >= 3):
-        raise StackUnderflow("not enough operands for operation putinterval")
-    elif is_mutable_string(op_stack[-3]) and is_int(op_stack[-2]) and is_mutable_string(op_stack[-1]):
-        string2 = op_stack.pop()  
-        index = op_stack.pop()    
-        string1 = op_stack.pop()  
-        
-        # Modify string1 in place
-        string1.putinterval(index, string2.string)
+    check_op_stack_underflow(3, "putinterval")
+    if is_mutable_string(op_stack[-3]) and is_int(op_stack[-2]) and is_mutable_string(op_stack[-1]):
+        string2, index, string1 = [op_stack.pop() for _ in range(3)] 
+        string1.putinterval(index, string2.string) # Modify string1 in place
     else:
         raise TypeMismatch("Wrong operands for operation putinterval")
             
 def if_operation():
-    if not (len(op_stack) >= 2):
-        raise StackUnderflow("not enough operands for operation if")
-    elif is_list(op_stack[-1]) and is_bool(op_stack[-2]):
-        process = op_stack.pop()
-        boolean = op_stack.pop()
-        if boolean:
-            for item in process:
-                process_input(item)
+    check_op_stack_underflow(2, "if")
+    if is_list(op_stack[-1]) and is_bool(op_stack[-2]):
+        process, boolean = op_stack.pop(), op_stack.pop()
+        [process_input(item) for item in process if boolean]
     else:
         raise TypeMismatch("Wrong operands for operation if")
 
 def ifelse_operation():
-    pass
+    check_op_stack_underflow(3, "ifelse")
+    if is_list(op_stack[-1]) and is_list(op_stack[-2]) and is_bool(op_stack[-3]):
+        process_else, process_if, boolean = [op_stack.pop() for _ in range(3)]
+        if boolean:
+            [process_input(item) for item in process_if]
+        else:
+            [process_input(item) for item in process_else]
+    else:
+        raise TypeMismatch("Wrong operands for operation ifelseS")
 
 def for_operation():
     pass
@@ -347,6 +274,7 @@ dict_stack[-1]["putinterval"] = put_interval_operation
 
 # TODO control flow operations
 dict_stack[-1]["if"] = if_operation
+dict_stack[-1]["ifelse"] = ifelse_operation
 
 # TODO IO operations
 
