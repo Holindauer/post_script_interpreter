@@ -17,12 +17,12 @@ def repl():
         user_input = lexer(input("REPL> "))
         for token in user_input:
             if token.lower() == "quit":
-                break
+                return
             process_input(token)
             logging.debug(f"Operand Stack: {op_stack}")
             logging.debug(f"Dictionary Stack: {dict_stack}")
             logging.info(f"\n\nOperand Stack: {op_stack}")
-            logging.info(f"Dictionary Stack: {dict_stack}")
+            # logging.info(f"Dictionary Stack: {dict_stack}")
 
 def lexer(input):
     """regex to get tokens from () {} or atomic whitespace seperated tokens"""
@@ -197,7 +197,7 @@ def if_operation():
     check_op_stack_underflow(2, "if")
     if is_list(op_stack[-1]) and is_bool(op_stack[-2]):
         process, boolean = op_stack.pop(), op_stack.pop()
-        [process_input(item) for item in process if boolean]
+        process_list_of_inputs(process if boolean else [])
     else:
         raise TypeMismatch("Wrong operands for operation if")
 
@@ -206,21 +206,32 @@ def ifelse_operation():
     if is_list(op_stack[-1]) and is_list(op_stack[-2]) and is_bool(op_stack[-3]):
         process_else, process_if, boolean = [op_stack.pop() for _ in range(3)]
         if boolean:
-            [process_input(item) for item in process_if]
+            process_list_of_inputs(process_if)
         else:
-            [process_input(item) for item in process_else]
+            process_list_of_inputs(process_else)
     else:
-        raise TypeMismatch("Wrong operands for operation ifelseS")
+        raise TypeMismatch("Wrong operands for operation ifelse")
 
 def for_operation():
-    pass
+    check_op_stack_underflow(4, "for")
+    if is_list(op_stack[-1]) and is_int(op_stack[-2]) and is_int(op_stack[-3]) and is_int(op_stack[-4]):
+        code_block, bound, increment, i = [op_stack.pop() for _ in range(4)]
+        # run code block 
+        for i in range(i, bound+1, increment):
+            op_stack.append(i)
+            process_list_of_inputs(code_block)
+
+    raise TypeMismatch("Wrong operands for operation for")
 
 def repeat_operation():
-    pass
-
-def quit_operation():
-    pass
-
+    check_op_stack_underflow(2, "repeat")
+    if is_list(op_stack[-1]) and is_int(op_stack[-2]):
+        code_block, num_times = [op_stack.pop() for _ in range(2)]
+        # execute the code block num times
+        for _ in range(num_times):
+            process_list_of_inputs(code_block)
+    
+    raise TypeMismatch("Wrong operands for operation repeat")
 
 # add arithmetic operations to the global dictionary/scope
 dict_stack[-1]["add"] = add_operation
@@ -266,15 +277,17 @@ dict_stack[-1]["not"] = not_operation
 dict_stack[-1]["true"] = true_operation
 dict_stack[-1]["false"] = false_operation
 
-# TODO String operations
+# string operations
 dict_stack[-1]["length"] = length_operation
 dict_stack[-1]["get"] = get_operation
 dict_stack[-1]["getinterval"] = getinterval_operation
 dict_stack[-1]["putinterval"] = put_interval_operation
 
-# TODO control flow operations
+# control flow operations
 dict_stack[-1]["if"] = if_operation
 dict_stack[-1]["ifelse"] = ifelse_operation
+dict_stack[-1]["for"] = for_operation
+dict_stack[-1]["repeat"] = repeat_operation
 
 # TODO IO operations
 
@@ -307,6 +320,10 @@ def process_input(user_input):
             lookup_in_dictionary(user_input)
         except Exception as e:
             logging.error(e)
+
+def process_list_of_inputs(input_list):
+    for input in input_list:
+        process_input(input)
 
 def process_boolean(input):
     logging.debug(f"Input to process_boolean: {input}")

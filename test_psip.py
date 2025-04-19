@@ -359,3 +359,18 @@ def test_ifelse_operation_false():
 	for command in input:
 		psip.process_input(command)
 	assert psip.op_stack[-1] == 4
+
+def test_for_operation():
+	psip.op_stack.clear()
+	input = psip.lexer("0 0 1 10 {add} for")
+	for command in input:
+		psip.process_input(command)
+	assert psip.op_stack[-1] == 55
+
+def test_repeat_operation():
+	psip.op_stack.clear()
+	input = psip.lexer("10 { 10 } repeat")
+	for command in input:
+		psip.process_input(command)
+	for i in range(10):
+		assert psip.op_stack[-1 - i] == 10
