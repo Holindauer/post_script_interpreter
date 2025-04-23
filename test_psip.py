@@ -229,20 +229,6 @@ def test_copy_operation():
 	psip.process_input("copy")
 	assert psip.op_stack == [1, 2, 3, 1, 2, 3]
 
-def test_dynamic_scoping():
-	psip.op_stack.clear()
-	input = [
-		r"/x", "1", "def",     # defined in global
-		"1", "dict", "begin",  # start new dict
-		r"/x", "2", "def",     # redef x in this scope
-		"1", "dict", "begin",  # new scope
-		"x",                   # put x onto the stack
-	]
-	for i in input:
-		psip.process_input(i)
-	psip.lookup_in_dictionary("x", dynamic_scoping=True)
-	assert psip.op_stack[-1] == 2
-
 def test_dict_with_capacity():
 	d = DictWithCapacity(1)
 	d["x"] = 1
@@ -374,3 +360,88 @@ def test_repeat_operation():
 		psip.process_input(command)
 	for i in range(10):
 		assert psip.op_stack[-1 - i] == 10
+
+def test_dynamic_scoping():
+	psip.op_stack.clear()
+	psip.reset_dict_stack()
+	input = [
+		r"/x", "1", "def",     # defined in global
+		"1", "dict", "begin",  # start new dict
+		r"/x", "2", "def",     # redef x in this scope
+		"1", "dict", "begin",  # new scope
+		"x",                   # put x onto the stack
+	]
+	for i in input:
+		psip.process_input(i)
+	psip.lookup_in_dictionary("x")
+	assert psip.op_stack[-1] == 2
+
+
+def test_closure():
+	psip.op_stack.clear()
+	psip.reset_dict_stack()
+	input = psip.lexer(r"/x { 1 } def ")
+	for command in input:
+		psip.process_input(command)
+
+	# this should grab the state of the dict stack at the time
+	# the closure was created. In this particular case, it should
+	# be equal but not the same object.
+	global_dict_stack = psip.dict_stack
+	code_block = global_dict_stack[-1]["x"]
+	closure_dict_stack = psip.find_closure(code_block)
+
+	assert global_dict_stack is not closure_dict_stack
+
+	# the dict stack at the time of definition should not contain the value of x
+	assert global_dict_stack[-1]["x"] == ['1']
+	if "x" in closure_dict_stack[-1]:
+		assert False
+	
+def test_closure_with_function():
+	psip.op_stack.clear()
+	psip.reset_dict_stack()
+
+	input = psip.lexer(
+		r"""
+		/x  1  def  
+		/y { x } def 
+		/x 2 def 
+		"""
+		)
+	for command in input:
+		psip.process_input(command)
+
+	global_dict_stack = psip.dict_stack
+	
+	print(global_dict_stack)
+	code_block = global_dict_stack[-1]["y"]
+	print(code_block)
+
+	closure_dict_stack = psip.find_closure(code_block)
+	print(closure_dict_stack)
+
+	# the closure dict stack should contain the state 
+	# of x at the time of defining the y function.
+	assert global_dict_stack is not closure_dict_stack
+	assert global_dict_stack[-1]["x"] == 2
+	assert closure_dict_stack[-1]["x"] == 1
+	
+# def test_lexical_scope():
+# 	psip.op_stack.clear()
+# 	psip.reset_dict_stack()
+# 	psip.scoping = "LEXICAL"
+# 	input = psip.lexer(
+# 		"""
+# 		/x 1 def 
+# 		/func { x } def 
+# 		/x 2 def 
+# 		func
+# 		"""
+# 		)
+# 	for command in input:
+# 		psip.process_input(command)
+
+# 	assert psip.scoping == "LEXICAL"
+
+# 	assert psip.op_stack[-1] == 1

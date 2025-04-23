@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 def is_num(x) -> bool:
     return isinstance(x, (int, float))
 
@@ -37,3 +39,8 @@ class DictWithCapacity(dict):
         if len(self) >= self.capacity:
             raise Exception("dict is full")
         super().__setitem__(key, value)
+
+class Closure:
+    def __init__(self, code_block, dict_stack):
+        self.code_block = code_block
+        self.dict_stack =  deepcopy(dict_stack)

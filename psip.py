@@ -1,6 +1,6 @@
 import logging
 from exceptions import ParseFailed, TypeMismatch, StackUnderflow, DivByZero
-from utils import is_num, is_int, is_bool, is_list, is_mutable_string, DictWithCapacity, MutableString
+from utils import is_num, is_int, is_bool, is_list, is_mutable_string, DictWithCapacity, MutableString, Closure
 import math
 from typing import Callable
 import re
@@ -11,6 +11,11 @@ logging.basicConfig(level=logging.INFO)
 op_stack = []         # type: ignore
 dict_stack = []       # type: ignore
 dict_stack.append({}) # global dict 
+
+# scoping = "DYNAMIC"
+scoping = "LEXICAL"
+
+closures = [] # type: ignore
 
 def repl():
     while True:
@@ -23,6 +28,8 @@ def repl():
             logging.debug(f"Dictionary Stack: {dict_stack}")
             logging.info(f"\n\nOperand Stack: {op_stack}")
             # logging.info(f"Dictionary Stack: {dict_stack}")
+            logging.info(f"Closures: {[closure.code_block for closure in closures]}")
+            logging.info(f"Closures Dict Stack: {[closure.dict_stack for closure in closures]}")
 
 def lexer(input):
     """regex to get tokens from () {} or atomic whitespace seperated tokens"""
@@ -249,67 +256,75 @@ def repeat_operation():
     
     raise TypeMismatch("Wrong operands for operation repeat")
 
-# add arithmetic operations to the global dictionary/scope
-dict_stack[-1]["add"] = add_operation
-dict_stack[-1]["def"] = def_operation
-dict_stack[-1]["sub"] = sub_operation
-dict_stack[-1]["div"] = div_operation
-dict_stack[-1]["idiv"] = idiv_operation
-dict_stack[-1]["mod"] = mod_operation
-dict_stack[-1]["abs"] = abs_operation
-dict_stack[-1]["neg"] = neg_operation
-dict_stack[-1]["ceil"] = ceil_operation
-dict_stack[-1]["floor"] = floor_operation
-dict_stack[-1]["round"] = round_operation
-dict_stack[-1]["sqrt"] = sqrt_operation
+def reset_dict_stack():
 
-# stack manipulation operations
-dict_stack[-1]["dup"] = dup_operation
-dict_stack[-1]["exch"] = exch_operation
-dict_stack[-1]["pop"] = pop_operation
-dict_stack[-1]["clear"] = clear_operation
-dict_stack[-1]["count"] = count_operation
-dict_stack[-1]["copy"] = copy_operation
+    # reset and add back in post script commands
+    dict_stack.clear()
+    dict_stack.append({})
 
-# io operations
-dict_stack[-1]["="] = pop_and_print
-dict_stack[-1]["=="] = double_equal_operation
-dict_stack[-1]["print"] = print_operation
+    # add arithmetic operations to the global dictionary/scope
+    dict_stack[-1]["add"] = add_operation
+    dict_stack[-1]["def"] = def_operation
+    dict_stack[-1]["sub"] = sub_operation
+    dict_stack[-1]["div"] = div_operation
+    dict_stack[-1]["idiv"] = idiv_operation
+    dict_stack[-1]["mod"] = mod_operation
+    dict_stack[-1]["abs"] = abs_operation
+    dict_stack[-1]["neg"] = neg_operation
+    dict_stack[-1]["ceil"] = ceil_operation
+    dict_stack[-1]["floor"] = floor_operation
+    dict_stack[-1]["round"] = round_operation
+    dict_stack[-1]["sqrt"] = sqrt_operation
 
-# dictionary operations
-dict_stack[-1]["dict"] = dict_operation
-dict_stack[-1]["begin"] = begin_operation
-dict_stack[-1]["end"] = end_dict_operation
-dict_stack[-1]["length"] = length_operation
-dict_stack[-1]["maxlength"] = maxlength_operation
+    # stack manipulation operations
+    dict_stack[-1]["dup"] = dup_operation
+    dict_stack[-1]["exch"] = exch_operation
+    dict_stack[-1]["pop"] = pop_operation
+    dict_stack[-1]["clear"] = clear_operation
+    dict_stack[-1]["count"] = count_operation
+    dict_stack[-1]["copy"] = copy_operation
 
-# boolean operations
-dict_stack[-1]["ne"] = ne_operation
-dict_stack[-1]["eq"] = eq_operation
-dict_stack[-1]["ge"] = ge_operation
-dict_stack[-1]["gt"] = gt_operation
-dict_stack[-1]["le"] = le_operation
-dict_stack[-1]["lt"] = lt_operation
-dict_stack[-1]["or"] = or_operation
-dict_stack[-1]["not"] = not_operation
-dict_stack[-1]["true"] = true_operation
-dict_stack[-1]["false"] = false_operation
+    # io operations
+    dict_stack[-1]["="] = pop_and_print
+    dict_stack[-1]["=="] = double_equal_operation
+    dict_stack[-1]["print"] = print_operation
 
-# string operations
-dict_stack[-1]["length"] = length_operation
-dict_stack[-1]["get"] = get_operation
-dict_stack[-1]["getinterval"] = getinterval_operation
-dict_stack[-1]["putinterval"] = put_interval_operation
+    # dictionary operations
+    dict_stack[-1]["dict"] = dict_operation
+    dict_stack[-1]["begin"] = begin_operation
+    dict_stack[-1]["end"] = end_dict_operation
+    dict_stack[-1]["length"] = length_operation
+    dict_stack[-1]["maxlength"] = maxlength_operation
 
-# control flow operations
-dict_stack[-1]["if"] = if_operation
-dict_stack[-1]["ifelse"] = ifelse_operation
-dict_stack[-1]["for"] = for_operation
-dict_stack[-1]["repeat"] = repeat_operation
+    # boolean operations
+    dict_stack[-1]["ne"] = ne_operation
+    dict_stack[-1]["eq"] = eq_operation
+    dict_stack[-1]["ge"] = ge_operation
+    dict_stack[-1]["gt"] = gt_operation
+    dict_stack[-1]["le"] = le_operation
+    dict_stack[-1]["lt"] = lt_operation
+    dict_stack[-1]["or"] = or_operation
+    dict_stack[-1]["not"] = not_operation
+    dict_stack[-1]["true"] = true_operation
+    dict_stack[-1]["false"] = false_operation
 
-def lookup_in_dictionary(input, dynamic_scoping=True):
+    # string operations
+    dict_stack[-1]["length"] = length_operation
+    dict_stack[-1]["get"] = get_operation
+    dict_stack[-1]["getinterval"] = getinterval_operation
+    dict_stack[-1]["putinterval"] = put_interval_operation
 
-    if dynamic_scoping:
+    # control flow operations
+    dict_stack[-1]["if"] = if_operation
+    dict_stack[-1]["ifelse"] = ifelse_operation
+    dict_stack[-1]["for"] = for_operation
+    dict_stack[-1]["repeat"] = repeat_operation
+
+reset_dict_stack()
+
+def lookup_in_dictionary(input):
+
+    if scoping == "DYNAMIC" or scoping == "LEXICAL":
         for scope in dict_stack[::-1]:
             if input in scope:
                 value = scope[input]
@@ -321,9 +336,7 @@ def lookup_in_dictionary(input, dynamic_scoping=True):
                 else:
                     op_stack.append(value)    
                 return
-
-    elif not dynamic_scoping:
-        raise Exception("Not Implemented Yet")                    
+         
     else:
         raise ParseFailed("input {input} is not in dictionary")
 
@@ -338,8 +351,20 @@ def process_input(user_input):
             logging.error(e)
 
 def process_list_of_inputs(input_list):
+
+    # get closure if lexically scoped
+    if scoping == "LEXICAL":
+        closure = find_closure(input_list)
+        if closure is not None:
+            scope_when_defined = closure
+            dict_stack.extend(scope_when_defined)
+
     for input in input_list:
         process_input(input)
+
+    if scoping == "LEXICAL":
+        for _ in range(len(scope_when_defined)):
+            dict_stack.pop()
 
 def process_boolean(input):
     logging.debug(f"Input to process_boolean: {input}")
@@ -390,10 +415,22 @@ PARSERS = [
     process_string
 ]
 
+def find_closure(code_block):
+    for closure in closures:
+        if closure.code_block is code_block:
+            return closure.dict_stack
+
+
 def process_constants(input):
     for parser in PARSERS:
         try:
             res = parser(input)
+
+            # when a code block, create closure of the state of the dict stack
+            if isinstance(res, list):
+                new_closure = Closure(res, dict_stack.copy())
+                closures.append(new_closure)  
+                              
             op_stack.append(res)
             return 
         except ParseFailed as e:
