@@ -5,15 +5,14 @@ import math
 from typing import Callable
 import re
 
-# logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
 
 op_stack = []       # type: ignore
 dict_stack = [{}]   # type: ignore
 closures = []       # type: ignore
 
 scoping = "DYNAMIC"
-
 
 def repl():
     while True:
@@ -24,10 +23,7 @@ def repl():
             process_input(token)
             logging.debug(f"Operand Stack: {op_stack}")
             logging.debug(f"Dictionary Stack: {dict_stack}")
-            logging.info(f"\n\nOperand Stack: {op_stack}")
-            # logging.info(f"Dictionary Stack: {dict_stack}")
-            # logging.info(f"Closures: {[closure.code_block for closure in closures]}")
-            # logging.info(f"Closures Dict Stack: {[closure.dict_stack for closure in closures]}")
+            logging.info(f"op_stack: {op_stack}")
 
 def lexer(input):
     """regex to get tokens from () {} or atomic whitespace seperated tokens"""
