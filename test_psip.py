@@ -116,6 +116,13 @@ def test_mod_operation(reset_psip):
 		assert psip.op_stack[-1] == two_nums[0] % two_nums[1]
 	except DivByZero:
 		pass 
+	
+def test_mul_operation(reset_psip):
+	two_nums, two_nums_str = two_random_numbers()
+	psip.process_input(two_nums_str[0])
+	psip.process_input(two_nums_str[1])
+	psip.process_input("mul")
+	assert psip.op_stack[-1] == two_nums[0] * two_nums[1]
 
 def test_abs_operation(reset_psip):
 	num = random.randint(-100, -1)

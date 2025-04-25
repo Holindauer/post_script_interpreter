@@ -121,6 +121,7 @@ div_operation = lambda: binary_operation(div)
 idiv_operation = lambda: binary_operation(idiv)
 mod_operation = lambda: binary_operation(mod)
 add_operation = lambda: binary_operation(lambda x, y: x + y)
+mul_operation = lambda: binary_operation(lambda x, y: x * y)
 sub_operation = lambda: binary_operation(lambda x, y: x - y)
 abs_operation = lambda: unary_operation(abs)
 neg_operation = lambda: unary_operation(lambda x: -x)
@@ -270,6 +271,7 @@ def reset_dict_stack():
 
     # add arithmetic operations to the global dictionary/scope
     dict_stack[-1]["add"] = add_operation
+    dict_stack[-1]["mul"] = mul_operation
     dict_stack[-1]["def"] = def_operation
     dict_stack[-1]["sub"] = sub_operation
     dict_stack[-1]["div"] = div_operation
