@@ -5,7 +5,7 @@ import math
 from typing import Callable
 import re
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 # logging.basicConfig(level=logging.DEBUG)
 
 op_stack = []       # type: ignore
