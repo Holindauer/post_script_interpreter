@@ -57,7 +57,7 @@ Will output:
 
 This is because f captures a closure of x when defined. Then, even though x is refined both in the global and calling scope, x will still evaluate to 9 when evaluated inside the scope of f.
 
-This style of lexical scoping does not utilize dictionaries, as is done in standard post scrip. Istead, this is how languages like python do scoping.
+This style of lexical scoping does not utilize dictionaries, as is done in standard post script. Istead, this is how languages like python do scoping.
 
 To switch back to dynamic scoping, use the **dynamic** command:
 
