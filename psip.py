@@ -8,14 +8,12 @@ import re
 # logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 
-op_stack = []         # type: ignore
-dict_stack = []       # type: ignore
-dict_stack.append({}) # global dict 
+op_stack = []       # type: ignore
+dict_stack = [{}]   # type: ignore
+closures = []       # type: ignore
 
-# scoping = "DYNAMIC"
-scoping = "LEXICAL"
+scoping = "DYNAMIC"
 
-closures = [] # type: ignore
 
 def repl():
     while True:
@@ -28,8 +26,8 @@ def repl():
             logging.debug(f"Dictionary Stack: {dict_stack}")
             logging.info(f"\n\nOperand Stack: {op_stack}")
             # logging.info(f"Dictionary Stack: {dict_stack}")
-            logging.info(f"Closures: {[closure.code_block for closure in closures]}")
-            logging.info(f"Closures Dict Stack: {[closure.dict_stack for closure in closures]}")
+            # logging.info(f"Closures: {[closure.code_block for closure in closures]}")
+            # logging.info(f"Closures Dict Stack: {[closure.dict_stack for closure in closures]}")
 
 def lexer(input):
     """regex to get tokens from () {} or atomic whitespace seperated tokens"""
@@ -220,7 +218,7 @@ def if_operation():
     check_op_stack_underflow(2, "if")
     if is_list(op_stack[-1]) and is_bool(op_stack[-2]):
         process, boolean = op_stack.pop(), op_stack.pop()
-        process_list_of_inputs(process if boolean else [])
+        evaluate_list_of_inputs(process if boolean else [])
     else:
         raise TypeMismatch("Wrong operands for operation if")
 
@@ -229,9 +227,9 @@ def ifelse_operation():
     if is_list(op_stack[-1]) and is_list(op_stack[-2]) and is_bool(op_stack[-3]):
         process_else, process_if, boolean = [op_stack.pop() for _ in range(3)]
         if boolean:
-            process_list_of_inputs(process_if)
+            evaluate_list_of_inputs(process_if)
         else:
-            process_list_of_inputs(process_else)
+            evaluate_list_of_inputs(process_else)
     else:
         raise TypeMismatch("Wrong operands for operation ifelse")
 
@@ -242,7 +240,7 @@ def for_operation():
         # run code block 
         for i in range(i, bound+1, increment):
             op_stack.append(i)
-            process_list_of_inputs(code_block)
+            evaluate_list_of_inputs(code_block)
 
     raise TypeMismatch("Wrong operands for operation for")
 
@@ -252,9 +250,17 @@ def repeat_operation():
         code_block, num_times = [op_stack.pop() for _ in range(2)]
         # execute the code block num times
         for _ in range(num_times):
-            process_list_of_inputs(code_block)
+            evaluate_list_of_inputs(code_block)
     
     raise TypeMismatch("Wrong operands for operation repeat")
+
+def switch_to_lexical_scope():
+    global scoping
+    scoping = "LEXICAL"
+
+def switch_to_dynamic_scope():
+    global scoping
+    scoping = "DYNAMIC"
 
 def reset_dict_stack():
 
@@ -320,6 +326,10 @@ def reset_dict_stack():
     dict_stack[-1]["for"] = for_operation
     dict_stack[-1]["repeat"] = repeat_operation
 
+    # scope operations
+    dict_stack[-1]["lexical"] = switch_to_lexical_scope
+    dict_stack[-1]["dynamic"] = switch_to_dynamic_scope
+
 reset_dict_stack()
 
 def lookup_in_dictionary(input):
@@ -331,8 +341,7 @@ def lookup_in_dictionary(input):
                 if callable(value): # checks if python func
                     value()
                 elif isinstance(value, list):
-                    for item in value:
-                        process_input(item)
+                    evaluate_list_of_inputs(value)
                 else:
                     op_stack.append(value)    
                 return
@@ -350,18 +359,26 @@ def process_input(user_input):
         except Exception as e:
             logging.error(e)
 
-def process_list_of_inputs(input_list):
+def evaluate_list_of_inputs(input_list):
+    """
+    This function will process the contents of a code block.
+    If using lexical scoping, it will search for the closure
+    belonging to that code block and brielfy suspend the 
+    dynamic scoping dict stack while the input is being evaluated.
+    """
 
-    # get closure if lexically scoped
+    # Suspend dynamic scoping if lexically scoped
     if scoping == "LEXICAL":
         closure = find_closure(input_list)
         if closure is not None:
             scope_when_defined = closure
             dict_stack.extend(scope_when_defined)
 
+    # eval each command
     for input in input_list:
         process_input(input)
 
+    # Resume dynamic scoping if lexically scoped
     if scoping == "LEXICAL":
         for _ in range(len(scope_when_defined)):
             dict_stack.pop()
@@ -417,16 +434,15 @@ PARSERS = [
 
 def find_closure(code_block):
     for closure in closures:
-        if closure.code_block is code_block:
+        if closure.code_block == code_block:
             return closure.dict_stack
-
 
 def process_constants(input):
     for parser in PARSERS:
         try:
             res = parser(input)
 
-            # when a code block, create closure of the state of the dict stack
+            # when encountering a code block, create closure of the state of the dict stack
             if isinstance(res, list):
                 new_closure = Closure(res, dict_stack.copy())
                 closures.append(new_closure)  
