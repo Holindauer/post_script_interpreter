@@ -62,9 +62,3 @@ This style of lexical scoping does not utilize dictionaries, as is done in stand
 To switch back to dynamic scoping, use the **dynamic** command:
 
     dynamic
-
-# Video Demo
-
-https://www.youtube.com/watch?v=BeGtX61YPKc
-
-
